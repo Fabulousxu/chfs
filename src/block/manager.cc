@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <vector>
 
 #include "block/manager.h"
 
@@ -74,35 +75,63 @@ BlockManager::BlockManager(const std::string &file, usize block_cnt)
 
 auto BlockManager::write_block(block_id_t block_id, const u8 *data)
     -> ChfsNullResult {
-  
-  // TODO: Implement this function.
-  UNIMPLEMENTED();
+  if (block_id >= this->block_cnt)
+    return ChfsNullResult(ErrorType::INVALID_ARG);
 
+  auto block_offset = block_id * this->block_sz;
+  if (this->in_memory)
+    memcpy(this->block_data + block_offset, data, this->block_sz);
+  else if (pwrite(this->fd, data, this->block_sz, block_offset) !=
+      this->block_sz)
+    return ChfsNullResult(ErrorType::DONE);
+  
   return KNullOk;
 }
 
 auto BlockManager::write_partial_block(block_id_t block_id, const u8 *data,
                                        usize offset, usize len)
     -> ChfsNullResult {
-  
-  // TODO: Implement this function.
-  UNIMPLEMENTED();
+  if (block_id >= this->block_cnt)
+    return ChfsNullResult(ErrorType::INVALID_ARG);
+  if (offset + len > this->block_sz)
+    return ChfsNullResult(ErrorType::INVALID_ARG);
+
+  auto block_offset = block_id * this->block_sz + offset;
+  if (this->in_memory)
+    memcpy(this->block_data + block_offset, data, len);
+  else if (pwrite(this->fd, data, len, block_offset) != len)
+    return ChfsNullResult(ErrorType::DONE);
 
   return KNullOk;
 }
 
 auto BlockManager::read_block(block_id_t block_id, u8 *data) -> ChfsNullResult {
+  if (block_id >= this->block_cnt)
+    return ChfsNullResult(ErrorType::INVALID_ARG);
 
-  // TODO: Implement this function.
-  UNIMPLEMENTED();
+  auto block_offset = block_id * this->block_sz;
+  if (this->in_memory)
+    memcpy(data, this->block_data + block_offset, this->block_sz);
+  else if (pread(this->fd, data, this->block_sz, block_offset) !=
+      this->block_sz)
+    return ChfsNullResult(ErrorType::DONE);
 
   return KNullOk;
 }
 
 auto BlockManager::zero_block(block_id_t block_id) -> ChfsNullResult {
-  
-  // TODO: Implement this function.
-  UNIMPLEMENTED();
+  if (block_id >= this->block_cnt)
+    return ChfsNullResult(ErrorType::INVALID_ARG);
+
+  auto block_offset = block_id * this->block_sz;
+  if (this->in_memory)
+    memset(this->block_data + block_offset, 0, this->block_sz);
+  else {
+    std::vector<u8> zero(this->block_sz, 0);
+    if (pwrite(this->fd, zero.data(), this->block_sz, block_offset) !=
+        this->block_sz)
+      return ChfsNullResult(ErrorType::DONE);
+  }
 
   return KNullOk;
 }
