@@ -40,6 +40,14 @@ public:
   std::vector<u8> new_block_state_;
 };
 
+class LogEntry {
+public:
+  txn_id_t txn_id;
+  block_id_t block_id;
+  u8 block_state[DiskBlockSize];
+
+} __attribute__((packed));
+
 /**
  * `CommitLog` is a class that records the block edits into the
  * commit log. It's used to redo the operation when the system
@@ -56,12 +64,22 @@ public:
   auto checkpoint() -> void;
   auto recover() -> void;
   auto get_log_entry_num() -> usize;
+  auto gen_txn_id() -> txn_id_t;
 
   bool is_checkpoint_enabled_;
   std::shared_ptr<BlockManager> bm_;
   /**
    * {Append anything if you need}
    */
+
+
+private:
+  LogEntry *log_data;
+  usize max_log_entry_num;
+  usize log_entry_num;
+  txn_id_t begin_txn_id;
+  txn_id_t last_txn_id;
+  std::mutex mutex_;
 };
 
 } // namespace chfs

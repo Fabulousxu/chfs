@@ -24,5 +24,6 @@ const usize DiskBlockSize = 4096;    // 4KB
 const usize DistributedMaxInodeSupported = 4096;
 const usize kMaxLogBlockSize = 10 * 1024; // 40MB, 10 * 1K * 4K/per block = 40M
 const usize kMaxLogSize = 128; // when this reaches, trigger checkpoint
+const usize kLogBlockCnt = 1024; // use 4MB for log
 
 } // namespace chfs
