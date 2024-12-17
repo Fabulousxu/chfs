@@ -12,6 +12,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 
 #include "common/config.h"
 #include "common/macros.h"
@@ -21,6 +22,7 @@ namespace chfs {
 // TODO
 
 class BlockIterator;
+class BlockOperation;
 
 /**
  * BlockManager implements a block device to read/write block devices
@@ -39,8 +41,10 @@ protected:
   bool in_memory; // whether we use in-memory to emulate the block manager
   bool maybe_failed;
   usize write_fail_cnt;
+  bool write_to_log;
+  std::vector<std::shared_ptr<BlockOperation>> log_ops;
 
-public:
+ public:
   /**
    * Creates a new block manager that writes to a file-backed block device.
    * @param block_file the file name of the  file to write to
@@ -135,6 +139,17 @@ public:
    * Flush the page cache
    */
   auto flush() -> ChfsNullResult;
+
+  /**
+   * Flush the log
+   */
+  auto flush_log() -> ChfsNullResult;
+
+  /**
+   * Set whether to write to the log
+   */
+  auto set_write_to_log(bool is_write_to_log)
+      -> std::vector<std::shared_ptr<BlockOperation>>;
 
   /**
    * Mark the block manager as may fail state
