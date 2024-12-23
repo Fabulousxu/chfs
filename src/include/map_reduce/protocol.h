@@ -6,8 +6,6 @@
 #include "librpc/server.h"
 #include "distributed/client.h"
 
-//Lab4: Free to modify this file
-
 namespace mapReduce {
     struct KeyVal {
         KeyVal(const std::string &key, const std::string &val) : key(key), val(val) {}
@@ -54,7 +52,7 @@ namespace mapReduce {
     class Coordinator {
     public:
         Coordinator(MR_CoordinatorConfig config, const std::vector<std::string> &files, int nReduce);
-        std::tuple<int, int> askTask(int);
+        std::tuple<int, int, std::string, int, int> askTask(int);
         int submitTask(int taskType, int index);
         bool Done();
 
@@ -63,6 +61,14 @@ namespace mapReduce {
         std::mutex mtx;
         bool isFinished;
         std::unique_ptr<chfs::RpcServer> rpc_server;
+        std::shared_ptr<chfs::ChfsClient> chfs_client;
+        std::string outPutFile;
+        std::mutex client_mtx;
+        int nReduces;
+        bool isMapFinished;
+        bool isReduceFinished;
+        int mapIndex;
+        int reduceIndex;
     };
 
     class Worker {
@@ -73,7 +79,7 @@ namespace mapReduce {
 
     private:
         void doMap(int index, const std::string &filename);
-        void doReduce(int index, int nfiles);
+        void doReduce(int index, int nfiles, int nreduces);
         void doSubmit(mr_tasktype taskType, int index);
 
         std::string outPutFile;
